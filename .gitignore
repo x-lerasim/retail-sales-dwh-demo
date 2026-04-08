@@ -86,3 +86,7 @@ temp/
 *.backup
 *.log.*
 coverage/
+
+# Claude
+.claude/
+claude/

@@ -1,10 +1,9 @@
----
 x-airflow-common:
   &airflow-common
   build:
       context: .
       dockerfile: docker/airflow.Dockerfile
-  image: apache/airflow:2.8.1
+  image: saler-b2b-analytics-airflow:2.8.1
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -20,12 +19,18 @@ x-airflow-common:
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
     AIRFLOW__CORE__TEST_CONNECTION: 'Enabled'
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    TMS_API_BASE_URL: http://tms-api:8085
+    MINIO_ENDPOINT: http://minio:9000
+    MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-admin}
+    MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-admin123}
+    MINIO_BUCKET: raw
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
     - spark_ivy_cache:/home/airflow/.ivy2
     - ./spark/conf:/opt/spark/conf
     - ./spark/jobs:/opt/spark/jobs
-    - ./airflow/dags:/opt/airflow/dags  
+    - ./airflow/dags:/opt/airflow/dags
+    - ./api_ingestion:/opt/airflow/dags/api_ingestion
     - ./airflow/logs:/opt/airflow/logs
     - ./airflow/config:/opt/airflow/config
     - ./airflow/plugins:/opt/airflow/plugins
@@ -40,6 +45,7 @@ x-airflow-common:
       condition: service_healthy
     airflow-postgres:
       condition: service_healthy
+
 services:
   airflow-postgres:
     image: postgres:13
@@ -234,6 +240,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
   metabase-setup:
     image: curlimages/curl:latest
     container_name: metabase-setup
@@ -331,14 +338,6 @@ services:
       retries: 5
       start_period: 20s
 
-  adminer:
-    image: adminer
-    container_name: adminer_s
-    ports:
-      - "8085:8080"
-    networks:
-      - data-network  
-
   generator:
     profiles: ["manual"]
     build:
@@ -368,6 +367,53 @@ services:
       retries: 5
       start_period: 5s
     restart: always
+
+  tms-api:
+    build:
+      context: .
+      dockerfile: docker/tms-api.Dockerfile
+    container_name: tms-api
+    ports:
+      - "8085:8085"
+    environment:
+      PG_HOST: postgres
+      PG_PORT: "5432"
+      PG_USER: ${SOURCES_POSTGRES_USER:-admin}
+      PG_PASS: ${SOURCES_POSTGRES_PASSWORD:-admin}
+      PG_DB: ${SOURCES_POSTGRES_DB:-kmk}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - data-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8085/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  api-ingestion:
+    build:
+      context: .
+      dockerfile: docker/api-ingestion.Dockerfile
+    container_name: api-ingestion
+    depends_on:
+      tms-api:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      TMS_API_BASE_URL: http://tms-api:8085
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-admin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-admin123}
+      MINIO_BUCKET: raw
+    networks:
+      - data-network
+    restart: "no"
+    profiles: ["manual"]   # docker compose --profile manual up api-ingestion
 
   spark-master:
     build:

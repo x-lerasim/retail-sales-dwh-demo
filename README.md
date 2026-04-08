@@ -2,4 +2,4 @@
 Run generator
 docker compose run --rm generator --mode historical --orders 50000 --days 90
 
-docker compose run --rm generator --mode incremental
+docker compose run --rm generator --mode incremental# saler-b2b-analytics
