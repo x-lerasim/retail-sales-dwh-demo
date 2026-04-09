@@ -8,7 +8,7 @@ from typing import Dict, List
 import boto3
 import requests
 from botocore.exceptions import ClientError
-from requests.exceptions import RequestException
+from requests.exceptions import RequestException, HTTPError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -68,19 +68,24 @@ def _fetch_page(since, page: int, limit: int, max_retries: int, timeout: int) ->
     for attempt in range(max_retries):
         try:
             response = requests.get(url, headers=headers, params=params, timeout=timeout)
+            if 500 <= response.status_code < 600:
+                raise HTTPError(f"Server error {response.status_code}", response=response)
             response.raise_for_status()
             data = response.json()
             if "data" not in data or "pagination" not in data:
                 raise ValueError("Invalid response: need data and pagination")
             return data
+        except HTTPError as e:
+            status = e.response.status_code if e.response else None
+            if status is not None and 500 <= status < 600 and attempt < max_retries - 1:
+                wait = 2 ** attempt
+                logger.warning("HTTP %s page=%s. Retry in %s s", status, page, wait)
+                time.sleep(wait)
+                continue
+            raise
         except RequestException as e:
             logger.error("Request failed page=%s: %s", page, e)
-            if attempt < max_retries - 1:
-                wait = 2**attempt
-                logger.info("Retry in %s s", wait)
-                time.sleep(wait)
-            else:
-                raise ValueError(f"Failed page {page} after {max_retries} attempts") from e
+            raise
 
 
 def ingest_all_pages(since=None, max_retries=5, timeout=30):
@@ -109,9 +114,9 @@ def max_timestamp(events: List[Dict]):
     return max(e["timestamp"] for e in events)
 
 
-def upload_to_minio(events: List[Dict]):
+def upload_to_minio(events: List[Dict], data_date: str = None):
     s3, bucket = _s3()
-    run_dt = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    run_dt = data_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     batch = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
     key = f"api/tms_tracking/dt={run_dt}/batch_{batch}.jsonl"
     body = "\n".join(json.dumps(e, ensure_ascii=False) for e in events)
