@@ -63,7 +63,7 @@ services:
       interval: 10s
       retries: 5
       start_period: 5s
-    restart: always
+
 
   airflow-redis:
     container_name: airflow_redis
@@ -78,7 +78,6 @@ services:
       timeout: 30s
       retries: 50
       start_period: 30s
-    restart: always
 
   airflow-webserver:
     <<: *airflow-common
@@ -94,7 +93,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: always
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
@@ -112,7 +110,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: always
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
@@ -136,7 +133,6 @@ services:
     environment:
       <<: *airflow-common-env
       DUMB_INIT_SETSID: "0"
-    restart: always
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
@@ -154,7 +150,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: always
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
@@ -366,7 +361,6 @@ services:
       interval: 10s
       retries: 5
       start_period: 5s
-    restart: always
 
   tms-api:
     build:
