@@ -1,4 +1,4 @@
-# spark-airflow-sales-demo
+# retail-sales-dwh-demo
 
 Демо-проект для генерации B2B продаж и загрузки данных в `PostgreSQL` через контейнер `generator`.
 
