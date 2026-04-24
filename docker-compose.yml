@@ -3,7 +3,7 @@ x-airflow-common:
   build:
       context: .
       dockerfile: docker/airflow.Dockerfile
-  image: saler-b2b-analytics-airflow:2.8.1
+  image: retail-sales-dwh-demo-airflow:2.8.1
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
