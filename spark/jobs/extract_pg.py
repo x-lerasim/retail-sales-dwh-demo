@@ -11,7 +11,7 @@ logging.basicConfig(
 logger = logging.getLogger('ExtractPG')
 
 
-SOURCE_SCHEMA = "source_kmk"
+SOURCE_SCHEMA = "source_vfd"
 
 ALL_TABLES = ["orders", "order_items", "shipments", "order_status_history", "payments", "returns", "customers", "products"]
 INCREMENTAL_TABLES = {
@@ -56,7 +56,7 @@ def main():
 
         logging.info("Starting Spark session")
 
-        url = f"jdbc:postgresql://{os.getenv('SOURCES_POSTGRES_HOST', 'postgres')}:{os.getenv('SOURCES_POSTGRES_PORT', '5432')}/{os.getenv('SOURCES_POSTGRES_DB', 'kmk')}"
+        url = f"jdbc:postgresql://{os.getenv('SOURCES_POSTGRES_HOST', 'postgres')}:{os.getenv('SOURCES_POSTGRES_PORT', '5432')}/{os.getenv('SOURCES_POSTGRES_DB', 'vfd')}"
         props = {
             "user": os.getenv("SOURCES_POSTGRES_USER", "admin"),
             "password": os.getenv("SOURCES_POSTGRES_PASSWORD", "admin"),

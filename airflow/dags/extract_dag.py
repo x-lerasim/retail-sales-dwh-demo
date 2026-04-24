@@ -80,7 +80,7 @@ with DAG(
     start_date=datetime(2026, 4, 6),
     schedule_interval="0 0 * * *",
     default_args=default_args,
-    tags=["extract", "postgres_kmk", "x-lerasim"],
+    tags=["extract", "postgres_vfd", "x-lerasim"],
     catchup=False,
     max_active_runs=1,
     dagrun_timeout=timedelta(hours=2),
@@ -89,8 +89,8 @@ with DAG(
 
     start = EmptyOperator(task_id="start")
 
-    ingest_postgres_kmk = SparkSubmitOperator(
-        task_id="postgres_kmk",
+    ingest_postgres_vfd = SparkSubmitOperator(
+        task_id="postgres_vfd",
         application=f"{SPARK_JOBS_PATH}/extract_pg.py",
         conn_id="spark_default",
         conf={"spark.master": "spark://spark-master:7077",
@@ -113,5 +113,5 @@ with DAG(
         execution_timeout=timedelta(minutes=20),
     )
 
-    start >> ingest_postgres_kmk
+    start >> ingest_postgres_vfd
     start >> check_api_has_data >>ingest_tracking_api

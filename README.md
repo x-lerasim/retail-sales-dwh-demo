@@ -1,5 +1,22 @@
-# saler-b2b-analytics
-Run generator
-docker compose run --rm generator --mode historical --orders 50000 --days 90
+# spark-airflow-sales-demo
 
-docker compose run --rm generator --mode incremental# saler-b2b-analytics
+Демо-проект для генерации B2B продаж и загрузки данных в `PostgreSQL` через контейнер `generator`.
+
+## Запуск генератора
+
+Историческая загрузка:
+
+`docker compose run --rm generator --mode historical --orders 50000 --days 90`
+
+Инкрементальная загрузка:
+
+`docker compose run --rm generator --mode incremental`
+
+## Что генерируется
+
+- справочники клиентов и товаров
+- заказы и позиции
+- отгрузки
+- история статусов
+- оплаты
+- возвраты

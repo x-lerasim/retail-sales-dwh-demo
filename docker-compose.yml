@@ -323,7 +323,7 @@ services:
     environment:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-admin}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-admin}
-      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-kmk}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-vfd}
     networks:
       - data-network
     healthcheck: 
@@ -351,13 +351,13 @@ services:
     environment:
         POSTGRES_USER: ${SOURCES_POSTGRES_USER:-admin}
         POSTGRES_PASSWORD: ${SOURCES_POSTGRES_PASSWORD:-admin}
-        POSTGRES_DB: ${SOURCES_POSTGRES_DB:-kmk}
+        POSTGRES_DB: ${SOURCES_POSTGRES_DB:-vfd}
     networks:
       - data-network 
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d kmk"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d vfd"]
       interval: 10s
       retries: 5
       start_period: 5s
@@ -374,7 +374,7 @@ services:
       PG_PORT: "5432"
       PG_USER: ${SOURCES_POSTGRES_USER:-admin}
       PG_PASS: ${SOURCES_POSTGRES_PASSWORD:-admin}
-      PG_DB: ${SOURCES_POSTGRES_DB:-kmk}
+      PG_DB: ${SOURCES_POSTGRES_DB:-vfd}
     depends_on:
       postgres:
         condition: service_healthy
@@ -469,9 +469,9 @@ services:
       clickhouse:
         condition: service_healthy 
     volumes:
-      - ./dbt/kmk_analytics:/usr/app/kmk_analytics
+      - ./dbt/vfd_analytics:/usr/app/vfd_analytics
       - ./dbt/.dbt:/home/dbt/.dbt
-    working_dir: /usr/app/kmk_analytics
+    working_dir: /usr/app/vfd_analytics
     env_file:
       - .env
     networks:
